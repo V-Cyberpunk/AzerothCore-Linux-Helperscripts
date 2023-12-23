@@ -1,15 +1,14 @@
 #!/bin/bash
 
-rm compilelog.log
-
-exec 3>&1 4>&2
-trap 'exec 2>&4 1>&3' 0 1 2 3
-exec 1>compilelog.log 2>&1
-
-path=/home/$USER/azerothcore-wotlk
+path=/home/v/azerothcore-wotlk
 
 killall -9 authserver
-killall -9 worldserver
+tmux send-keys -t 2 'saveall' Enter
+tmux send-keys -t 2 'server shutdown 10s' Enter
+while ps -p $(pidof worldserver) > /dev/null; do
+    sleep 1
+done
+#killall -9 worldserver
 killall -9 htop
 tmux kill-server
 screen -S wow -X quit
@@ -17,14 +16,13 @@ screen -S wow -X quit
 echo "Tasks gekillt"
 
 cd ${path}
-git pull origin master --no-edit
-git checkout master
+git pull origin
 cd ${path}/modules
 
 for d in * ; do
     if [ -d "$d" ]; then
         cd ${d}
-        git pull origin --no-edit
+        git pull origin
         cd ..
     fi
 done
@@ -46,9 +44,8 @@ rm -rf ${path}/build
 
 echo "CMake Cache geloescht"
 
-mysqldump -u user -p'pw' auth > auth.sql
-mysqldump -u user -p'pw' world > world.sql
-mysqldump -u user -p'pw' characters > characters.sql
+mysqldump -u wow -p'wow' auth > auth.sql
+mysqldump -u wow -p'wow' characters > characters.sql
 
 echo "auth und characters gedumpt"
 
@@ -56,4 +53,4 @@ $HOME/server/bin/dbimport
 
 echo "DB geupdatet"
 
-$HOME/server.sh
+./server.sh
